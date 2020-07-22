@@ -5,7 +5,7 @@
 //+------------------------------------------------------------------+
 #property copyright "Jaiholang"
 #property link      "https://www.mql5.com"
-#property version   "1.00"
+#property version   "2.00"
 #property strict
 
 //#include <Telegram.mqh>
@@ -106,30 +106,66 @@ void WatchThesePairs()
 void WatchPair(string pairName)
   {
 
-   double MacdCurrentM15, StochCurrentM15;//,MacdPrevious;
-   double MacdCurrentM30, StochCurrentM30;//,MacdPrevious;
-
+   double MacdCurrentM15, StochCurrentM15, parabolicSAR15, PriceAsk; // ,MacdPrevious;
+   double MacdCurrentM30, StochCurrentM30, parabolicSAR30, PriceBid; // ,MacdPrevious;
+   
+   string message, signalValidity, parabolicSAR15Str, parabolicSAR30Str;
+   
+   PriceAsk = 0.000000;
+   PriceBid = 0.000000;
+   
    MacdCurrentM15 = iMACD(pairName, PERIOD_M15, 12, 26, 1, PRICE_CLOSE, MODE_SIGNAL, 0);
    StochCurrentM15 = iStochastic(pairName, PERIOD_M15, 3, 1, 3, MODE_EMA, 1, MODE_MAIN, 0);
 
    MacdCurrentM30 = iMACD(pairName, PERIOD_M30, 12, 26, 1, PRICE_CLOSE, MODE_SIGNAL, 0);
    StochCurrentM30 = iStochastic(pairName, PERIOD_M30, 3, 1, 3, MODE_EMA, 1, MODE_MAIN, 0);
 
+   parabolicSAR15 = iSAR(pairName, PERIOD_M15, 0.02, 0.2, 0);
+   parabolicSAR30 = iSAR(pairName, PERIOD_M30, 0.02, 0.2, 0);
+   
+   parabolicSAR15Str = DoubleToStr(parabolicSAR15, 6);
+   parabolicSAR30Str = DoubleToStr(parabolicSAR30, 6);
+   
+   PriceAsk = MarketInfo(0, MODE_ASK);
+   PriceBid = MarketInfo(0, MODE_BID);
+
+   message = "";
+   signalValidity = "";
+   
    if((MacdCurrentM15 > 0 && StochCurrentM15 < 20) && (MacdCurrentM30 > 0 && StochCurrentM30 < 20))
-     {
-      string message;
-      message = StringConcatenate("BUY - ", pairName, "\n\n", "[M15]\nMACD : ", DoubleToStr(MacdCurrentM15, 6), "\nStoch : ", DoubleToStr(StochCurrentM15, 6), "\n\n", "[M30]\nMACD : ", DoubleToStr(MacdCurrentM30, 6), "\nStoch : ", DoubleToStr(StochCurrentM30, 6));
+   {
+   
+      if((parabolicSAR15 > MarketInfo(0, MODE_ASK)) && (parabolicSAR30 > MarketInfo(0, MODE_ASK)))
+      {
+         signalValidity = "RISKY";
+      }
+      else
+      {
+         signalValidity = "OK";
+      }
+      
+      message = StringConcatenate("BUY - ", pairName, "\n\n", "[M15]\nMACD : ", DoubleToStr(MacdCurrentM15, 6), "\nStoch : ", DoubleToStr(StochCurrentM15, 6), "\nSAR : ", parabolicSAR15Str, "\n\n", "[M30]\nMACD : ", DoubleToStr(MacdCurrentM30, 6), "\nStoch : ", DoubleToStr(StochCurrentM30, 6), "\nSAR : ", parabolicSAR30Str, "\n\nValidity : ", signalValidity, "\n\nVersion 2.0");
       TelegramSendTextAsync(apikey, chatid_group, message);
-     }
+   }
 
    if((MacdCurrentM15 < 0 && StochCurrentM15 > 80) && (MacdCurrentM30 < 0 && StochCurrentM30 > 80))
-     {
-      string message;
-      message = StringConcatenate("SELL - ", pairName, "\n\n", "[M15]\nMACD : ", DoubleToStr(MacdCurrentM15, 6), "\nStoch : ", DoubleToStr(StochCurrentM15, 6), "\n\n", "[M30]\nMACD : ", DoubleToStr(MacdCurrentM30, 6), "\nStoch : ", DoubleToStr(StochCurrentM30, 6));
+   { 
+   
+      if((parabolicSAR15 < MarketInfo(0, MODE_ASK)) && (parabolicSAR30 < MarketInfo(0, MODE_ASK)))
+      {
+         signalValidity = "RISKY";
+      }
+      else
+      {
+         signalValidity = "OK";
+      }
+      
+      message = StringConcatenate("SELL - ", pairName, "\n\n", "[M15]\nMACD : ", DoubleToStr(MacdCurrentM15, 6), "\nStoch : ", DoubleToStr(StochCurrentM15, 6), "\nSAR : ", parabolicSAR15Str, "\n\n", "[M30]\nMACD : ", DoubleToStr(MacdCurrentM30, 6), "\nStoch : ", DoubleToStr(StochCurrentM30, 6), "\nSAR : ", parabolicSAR30Str, "\n\nValidity : ", signalValidity, "\n\nVersion 2.0");
+     // message = StringConcatenate("SELL - ", pairName, "\n\n", "[M15]\nMACD : ", DoubleToStr(MacdCurrentM15, 6), "\nStoch : ", DoubleToStr(StochCurrentM15, 6), "\n\n", "[M30]\nMACD : ", DoubleToStr(MacdCurrentM30, 6), "\nStoch : ", DoubleToStr(StochCurrentM30, 6), "\nSAR M15 : X", DoubleToStr(parabolicSAR15, 6), "\nSAR M30 : X", DoubleToStr(parabolicSAR30, 6));
       TelegramSendTextAsync(apikey, chatid_group, message);
-     }
+   }
 
-  }
+}
 
 //+------------------------------------------------------------------+
 //| Tester function                                                  |
